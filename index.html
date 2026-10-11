@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deutsch Quest • Year 7 Module 1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .page-screen { display: none; }
+        .page-screen.active { 
+            display: flex; 
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(16px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .bounce-gentle { animation: bounceGentle 2.5s infinite ease-in-out; }
+        @keyframes bounceGentle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .glow-indigo { box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.4); }
+        .input-gamified {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .input-gamified:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px -4px rgba(99, 102, 241, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 h-full flex flex-col justify-between overflow-x-hidden selection:bg-amber-400 selection:text-slate-950">
+
+    <!-- Top Header & Soundtrack Controls -->
+    <header class="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-gradient-to-tr from-amber-500 via-rose-500 to-indigo-600 rounded-xl flex items-center justify-center font-black text-white text-xl shadow-lg shadow-indigo-500/20">
+                    DE
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-sm sm:text-base text-slate-100 flex items-center gap-2">
+                        Deutsch Quest 
+                        <span class="text-[10px] bg-amber-500/20 text-amber-300 font-bold px-2.5 py-0.5 rounded-full border border-amber-500/30 uppercase tracking-wide">Module 1</span>
+                    </h1>
+                    <p id="subHeaderProgress" class="text-xs text-slate-400 font-medium">Step 1 of 7 • Get Ready!</p>
+                </div>
+            </div>
+
+            <!-- Stats & Sound Controls -->
+            <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+                <!-- Soundtrack Selector & Controls -->
+                <div class="flex items-center bg-slate-800 border border-slate-700/80 rounded-xl px-2.5 py-1.5 text-xs gap-2">
+                    <span class="text-base leading-none">🎵</span>
+                    <select id="bgmSelect" onchange="changeMusicTrack(this.value)" class="bg-transparent text-slate-200 font-bold outline-none cursor-pointer text-xs">
+                        <option value="off" class="bg-slate-900 text-slate-300">Music: Off</option>
+                        <option value="synthwave" class="bg-slate-900 text-slate-300" selected>Synthwave Pulse</option>
+                        <option value="chiptune" class="bg-slate-900 text-slate-300">8-Bit Chiptune</option>
+                        <option value="quest" class="bg-slate-900 text-slate-300">Quest Synth Anthem</option>
+                        <option value="lofi" class="bg-slate-900 text-slate-300">Lo-Fi Focus</option>
+                        <option value="arcade" class="bg-slate-900 text-slate-300">High-Energy Arcade</option>
+                    </select>
+
+                    <button type="button" id="bgmPlayToggleBtn" onclick="toggleMusicPlay()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold px-2 py-0.5 rounded-lg text-[10px] transition-colors">
+                        ▶ PLAY
+                    </button>
+
+                    <input type="range" id="bgmVolume" min="0" max="1" step="0.05" value="0.2" oninput="updateMusicVolume(this.value)" class="w-14 accent-indigo-500 cursor-pointer" title="Music Volume">
+                </div>
+
+                <!-- Streak Badge -->
+                <div class="flex items-center gap-1.5 bg-slate-800 border border-slate-700/80 px-2.5 py-1.5 rounded-xl text-xs font-extrabold text-amber-400 shadow-inner">
+                    <span>🔥</span>
+                    <span id="streakCount">0</span>
+                </div>
+
+                <!-- XP Badge -->
+                <div class="flex items-center gap-1.5 bg-indigo-950 border border-indigo-800 px-2.5 py-1.5 rounded-xl text-xs font-extrabold text-indigo-300 shadow-inner">
+                    <span class="text-amber-400">⭐</span>
+                    <span id="xpCount">0</span>
+                </div>
+
+                <!-- Audio FX Toggle -->
+                <button type="button" onclick="toggleAudio()" id="audioBtn" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 flex items-center justify-center text-xs transition-colors" title="Toggle Sound FX">
+                    🔊
+                </button>
+            </div>
+        </div>
+
+        <!-- Special Character Typing Toolbar -->
+        <div class="bg-slate-950/80 border-t border-slate-800/80 px-4 py-1.5 flex items-center justify-center gap-2 text-xs">
+            <span class="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Quick Type:</span>
+            <button type="button" onclick="insertChar('ß')" class="px-2.5 py-1 bg-slate-800 hover:bg-indigo-600 text-amber-300 hover:text-white font-extrabold rounded-lg border border-slate-700 transition-colors shadow-sm">ß</button>
+            <button type="button" onclick="insertChar('ä')" class="px-2.5 py-1 bg-slate-800 hover:bg-indigo-600 text-amber-300 hover:text-white font-extrabold rounded-lg border border-slate-700 transition-colors shadow-sm">ä</button>
+            <button type="button" onclick="insertChar('ö')" class="px-2.5 py-1 bg-slate-800 hover:bg-indigo-600 text-amber-300 hover:text-white font-extrabold rounded-lg border border-slate-700 transition-colors shadow-sm">ö</button>
+            <button type="button" onclick="insertChar('ü')" class="px-2.5 py-1 bg-slate-800 hover:bg-indigo-600 text-amber-300 hover:text-white font-extrabold rounded-lg border border-slate-700 transition-colors shadow-sm">ü</button>
+        </div>
+
+        <!-- Progress Tracker Bar -->
+        <div class="w-full bg-slate-800/50 h-2 overflow-hidden">
+            <div id="progressBar" class="bg-gradient-to-r from-indigo-500 via-rose-500 to-amber-400 h-full w-0 transition-all duration-500 ease-out"></div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-3xl w-full mx-auto px-4 py-6 flex flex-col justify-center">
+
+        <!-- STEP 0: Welcome Screen -->
+        <div id="page0" class="page-screen active flex-col items-center justify-center text-center">
+            <div class="w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 sm:p-12 shadow-2xl relative overflow-hidden">
+                <div class="absolute -top-24 -right-24 w-48 h-48 bg-indigo-600/20 rounded-full blur-3xl"></div>
+                <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl"></div>
+
+                <div class="w-20 h-20 bg-gradient-to-tr from-indigo-600 to-purple-600 border-2 border-indigo-400/50 rounded-2xl flex items-center justify-center mx-auto mb-6 bounce-gentle shadow-xl shadow-indigo-500/20 text-4xl">
+                    🦉
+                </div>
+
+                <h2 class="text-3xl sm:text-4xl font-black text-white mb-3">Willkommen!</h2>
+                <p class="text-slate-400 text-sm sm:text-base max-w-md mx-auto mb-8 font-medium">
+                    Ready to master Year 7 German Module 1? Enter your name to start your language quest!
+                </p>
+
+                <div class="max-w-xs mx-auto mb-6 text-left">
+                    <label for="studentName" class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Enter your name</label>
+                    <input type="text" id="studentName" placeholder="Type your name..." class="input-gamified w-full px-5 py-4 bg-slate-950 border-2 border-slate-700 focus:border-indigo-500 rounded-2xl text-white font-bold text-lg outline-none transition-all">
+                    <p id="nameError" class="text-xs text-rose-400 mt-2 font-bold hidden">Please type your name to begin!</p>
+                </div>
+
+                <!-- Dynamic Welcome Card -->
+                <div id="welcomeBanner" class="hidden max-w-sm mx-auto mb-6 p-4 bg-gradient-to-r from-indigo-900/80 to-purple-900/80 border-2 border-indigo-500/50 rounded-2xl text-white font-extrabold text-lg shadow-lg">
+                    🦉 Welcome, <span id="displayWelcomeName" class="text-amber-300"></span>! Ready to master Module 1?
+                </div>
+
+                <button type="button" onclick="startQuest()" class="w-full max-w-xs py-4 bg-gradient-to-r from-indigo-500 via-indigo-600 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-extrabold text-lg rounded-2xl shadow-lg shadow-indigo-500/25 transition-all transform hover:-translate-y-0.5 active:translate-y-0">
+                    Start Quest
+                </button>
+            </div>
+        </div>
+
+        <!-- STEP 1: Section 1 Animals -->
+        <div id="page1" class="page-screen flex-col">
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
+                    <div>
+                        <span class="text-xs font-black text-amber-400 uppercase tracking-widest">Section 1</span>
+                        <h2 class="text-2xl font-black text-white mt-1">Animals in Full Sentences</h2>
+                        <p class="text-xs text-slate-400 font-medium mt-1">Complete each full German sentence using full vocabulary forms (e.g. "ein" or "eine").</p>
+                    </div>
+                    <div class="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center font-bold text-amber-400">01</div>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="bg-slate-950/70 p-4 rounded-2xl border border-slate-800">
+                        <label for="q1" class="block font-bold text-slate-300 text-sm mb-2">1. Das ist ____ Gecko.</label>
+                        <input type="text" id="q1" class="input-gamified w-full px-4 py-3 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                    </div>
+                    <div class="bg-slate-950/70 p-4 rounded-2xl border border-slate-800">
+                        <label for="q2" class="block font-bold text-slate-300 text-sm mb-2">2. Das ist ____ Hamster.</label>
+                        <input type="text" id="q2" class="input-gamified w-full px-4 py-3 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                    </div>
+                    <div class="bg-slate-950/70 p-4 rounded-2xl border border-slate-800">
+                        <label for="q3" class="block font-bold text-slate-300 text-sm mb-2">3. Das ist ____ Hund.</label>
+                        <input type="text" id="q3" class="input-gamified w-full px-4 py-3 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                    </div>
+                    <div class="bg-slate-950/70 p-4 rounded-2xl border border-slate-800">
+                        <label for="q4" class="block font-bold text-slate-300 text-sm mb-2">4. Das ist ____ Katze.</label>
+                        <input type="text" id="q4" class="input-gamified w-full px-4 py-3 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                    </div>
+                    <div class="bg-slate-950/70 p-4 rounded-2xl border border-slate-800">
+                        <label for="q5" class="block font-bold text-slate-300 text-sm mb-2">5. Das ist ____ Maus.</label>
+                        <input type="text" id="q5" class="input-gamified w-full px-4 py-3 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                    </div>
+                    <div class="bg-slate-950/70 p-4 rounded-2xl border border-slate-800">
+                        <label for="q6" class="block font-bold text-slate-300 text-sm mb-2">6. Das ist ____ Schlange.</label>
+                        <input type="text" id="q6" class="input-gamified w-full px-4 py-3 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                    </div>
+                    <div class="bg-slate-950/70 p-4 rounded-2xl border border-slate-800">
+                        <label for="q7" class="block font-bold text-slate-300 text-sm mb-2">7. Das ist ____ Kaninchen.</label>
+                        <input type="text" id="q7" class="input-gamified w-full px-4 py-3 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                    </div>
+                    <div class="bg-slate-950/70 p-4 rounded-2xl border border-slate-800">
+                        <label for="q8" class="block font-bold text-slate-300 text-sm mb-2">8. Das ist ____ Pferd.</label>
+                        <input type="text" id="q8" class="input-gamified w-full px-4 py-3 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 2: Section 2 Infinitives -->
+        <div id="page2" class="page-screen flex-col">
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
+                    <div>
+                        <span class="text-xs font-black text-amber-400 uppercase tracking-widest">Section 2</span>
+                        <h2 class="text-2xl font-black text-white mt-1">Identify the Infinitive</h2>
+                        <p class="text-xs text-slate-400 font-medium mt-1">Write the base infinitive form of each conjugated verb.</p>
+                    </div>
+                    <div class="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center font-bold text-amber-400">02</div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-slate-950/70 p-5 rounded-2xl border border-slate-800">
+                        <label for="q9" class="block font-extrabold text-slate-200 text-sm mb-3">1. er / sie / es ist</label>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-bold text-slate-400 uppercase">Infinitive:</span>
+                            <input type="text" id="q9" class="input-gamified w-full px-4 py-2.5 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-950/70 p-5 rounded-2xl border border-slate-800">
+                        <label for="q10" class="block font-extrabold text-slate-200 text-sm mb-3">2. du heißt / er heißt</label>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-bold text-slate-400 uppercase">Infinitive:</span>
+                            <input type="text" id="q10" class="input-gamified w-full px-4 py-2.5 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-950/70 p-5 rounded-2xl border border-slate-800">
+                        <label for="q11" class="block font-extrabold text-slate-200 text-sm mb-3">3. du hast / er hat</label>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-bold text-slate-400 uppercase">Infinitive:</span>
+                            <input type="text" id="q11" class="input-gamified w-full px-4 py-2.5 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-950/70 p-5 rounded-2xl border border-slate-800">
+                        <label for="q12" class="block font-extrabold text-slate-200 text-sm mb-3">4. ich wohne</label>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-bold text-slate-400 uppercase">Infinitive:</span>
+                            <input type="text" id="q12" class="input-gamified w-full px-4 py-2.5 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 3: Section 3 German Infinitives -->
+        <div id="page3" class="page-screen flex-col">
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
+                    <div>
+                        <span class="text-xs font-black text-amber-400 uppercase tracking-widest">Section 3</span>
+                        <h2 class="text-2xl font-black text-white mt-1">Translate Infinitives</h2>
+                    </div>
+                    <div class="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center font-bold text-amber-400">03</div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-slate-950/70 p-5 rounded-2xl border border-slate-800">
+                        <label for="q13" class="block font-extrabold text-slate-200 text-sm mb-2">1. to be</label>
+                        <input type="text" id="q13" class="input-gamified w-full px-4 py-3 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                    </div>
+
+                    <div class="bg-slate-950/70 p-5 rounded-2xl border border-slate-800">
+                        <label for="q14" class="block font-extrabold text-slate-200 text-sm mb-2">2. to have</label>
+                        <input type="text" id="q14" class="input-gamified w-full px-4 py-3 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                    </div>
+
+                    <div class="bg-slate-950/70 p-5 rounded-2xl border border-slate-800">
+                        <label for="q15" class="block font-extrabold text-slate-200 text-sm mb-2">3. to be called</label>
+                        <input type="text" id="q15" class="input-gamified w-full px-4 py-3 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                    </div>
+
+                    <div class="bg-slate-950/70 p-5 rounded-2xl border border-slate-800">
+                        <label for="q16" class="block font-extrabold text-slate-200 text-sm mb-2">4. to live</label>
+                        <input type="text" id="q16" class="input-gamified w-full px-4 py-3 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 4: Section 4 Conjugations & Accusative Einen Practice -->
+        <div id="page4" class="page-screen flex-col">
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
+                    <div>
+                        <span class="text-xs font-black text-amber-400 uppercase tracking-widest">Section 4</span>
+                        <h2 class="text-2xl font-black text-white mt-1">Conjugations & Accusative "einen"</h2>
+                    </div>
+                    <div class="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center font-bold text-amber-400">04</div>
+                </div>
+
+                <div class="space-y-5">
+                    <!-- sein -->
+                    <div class="bg-slate-950/70 p-4 rounded-2xl border border-slate-800">
+                        <h3 class="font-black text-indigo-300 text-sm mb-3">A. Verb 'sein' (to be):</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label for="q17" class="block text-xs font-bold text-slate-400 mb-1">ich ___ (I am)</label>
+                                <input type="text" id="q17" class="input-gamified w-full px-3 py-2 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                            </div>
+                            <div>
+                                <label for="q18" class="block text-xs font-bold text-slate-400 mb-1">du ___ (you are)</label>
+                                <input type="text" id="q18" class="input-gamified w-full px-3 py-2 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                            </div>
+                            <div>
+                                <label for="q19" class="block text-xs font-bold text-slate-400 mb-1">er / sie / es ___ (he/she/it is)</label>
+                                <input type="text" id="q19" class="input-gamified w-full px-3 py-2 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- haben & einen practice -->
+                    <div class="bg-slate-950/70 p-4 rounded-2xl border border-slate-800">
+                        <h3 class="font-black text-indigo-300 text-sm mb-3">B. Verb 'haben' & Accusative "einen":</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label for="q20" class="block text-xs font-bold text-slate-400 mb-1">ich ___ (I have)</label>
+                                <input type="text" id="q20" class="input-gamified w-full px-3 py-2 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                            </div>
+                            <div>
+                                <label for="q21" class="block text-xs font-bold text-slate-400 mb-1">Ich habe ____ Hund.</label>
+                                <input type="text" id="q21" class="input-gamified w-full px-3 py-2 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                            </div>
+                            <div>
+                                <label for="q22" class="block text-xs font-bold text-slate-400 mb-1">Hast du ____ Vogel?</label>
+                                <input type="text" id="q22" class="input-gamified w-full px-3 py-2 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- heißen -->
+                    <div class="bg-slate-950/70 p-4 rounded-2xl border border-slate-800">
+                        <h3 class="font-black text-indigo-300 text-sm mb-3">C. Verb 'heißen' (to be called):</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label for="q23" class="block text-xs font-bold text-slate-400 mb-1">ich ___ (my name is)</label>
+                                <input type="text" id="q23" class="input-gamified w-full px-3 py-2 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                            </div>
+                            <div>
+                                <label for="q24" class="block text-xs font-bold text-slate-400 mb-1">du ___ (what is your name)</label>
+                                <input type="text" id="q24" class="input-gamified w-full px-3 py-2 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                            </div>
+                            <div>
+                                <label for="q25" class="block text-xs font-bold text-slate-400 mb-1">er / sie / es ___ (he/she is called)</label>
+                                <input type="text" id="q25" class="input-gamified w-full px-3 py-2 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 5: Section 5 Key Translations -->
+        <div id="page5" class="page-screen flex-col">
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
+                    <div>
+                        <span class="text-xs font-black text-amber-400 uppercase tracking-widest">Section 5</span>
+                        <h2 class="text-2xl font-black text-white mt-1">Key Phrases Translation</h2>
+                    </div>
+                    <div class="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center font-bold text-amber-400">05</div>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="bg-slate-950/70 p-4 rounded-2xl border border-slate-800">
+                        <label for="q26" class="block font-extrabold text-slate-200 text-sm mb-2">1. Where do you live?</label>
+                        <input type="text" id="q26" class="input-gamified w-full px-4 py-3 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                    </div>
+
+                    <div class="bg-slate-950/70 p-4 rounded-2xl border border-slate-800">
+                        <label for="q27" class="block font-extrabold text-slate-200 text-sm mb-2">2. I live in...</label>
+                        <input type="text" id="q27" class="input-gamified w-full px-4 py-3 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                    </div>
+
+                    <div class="bg-slate-950/70 p-4 rounded-2xl border border-slate-800">
+                        <label for="q28" class="block font-extrabold text-slate-200 text-sm mb-2">3. What's your name?</label>
+                        <input type="text" id="q28" class="input-gamified w-full px-4 py-3 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                    </div>
+
+                    <div class="bg-slate-950/70 p-4 rounded-2xl border border-slate-800">
+                        <label for="q29" class="block font-extrabold text-slate-200 text-sm mb-2">4. How old are you?</label>
+                        <input type="text" id="q29" class="input-gamified w-full px-4 py-3 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                    </div>
+
+                    <div class="bg-slate-950/70 p-4 rounded-2xl border border-slate-800">
+                        <label for="q30" class="block font-extrabold text-slate-200 text-sm mb-2">5. Do you have siblings?</label>
+                        <input type="text" id="q30" class="input-gamified w-full px-4 py-3 bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl text-amber-300 font-extrabold outline-none">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 6: Results Screen -->
+        <div id="page6" class="page-screen flex-col">
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl">
+                <!-- Score Header Banner -->
+                <div class="bg-gradient-to-r from-indigo-900 via-purple-900 to-slate-900 border border-indigo-500/40 p-6 sm:p-8 rounded-2xl shadow-xl mb-8 flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
+                    <div class="z-10 text-center sm:text-left">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 bg-amber-400/20 text-amber-300 rounded-full text-xs font-black mb-3 border border-amber-400/30">
+                            <span id="rankBadge">🏆 MODULE 1 MASTER</span>
+                        </div>
+                        <h2 id="congratsHeader" class="text-3xl sm:text-4xl font-black text-white mb-1">Well done, Hero!</h2>
+                        <p class="text-slate-300 text-sm font-medium">You have completed your Year 7 German Module 1 Assessment!</p>
+                    </div>
+
+                    <div class="z-10 bg-slate-950/80 border-2 border-amber-400/50 p-5 rounded-2xl text-center min-w-[150px] shadow-2xl">
+                        <div id="finalScorePercent" class="text-4xl font-black text-amber-400">100%</div>
+                        <div id="finalScoreMarks" class="text-xs font-extrabold text-indigo-300 mt-1 uppercase">30 / 30 Marks</div>
+                    </div>
+                </div>
+
+                <div class="border-b border-slate-800 pb-3 mb-6 flex justify-between items-center">
+                    <h3 class="text-lg font-black text-white">Review & Answer Breakdown</h3>
+                    <span class="text-xs text-slate-400 font-bold">💡 Grammar guidance for missed items</span>
+                </div>
+
+                <!-- Results list container -->
+                <div id="resultsList" class="space-y-4"></div>
+
+                <div class="mt-8 text-center">
+                    <button type="button" onclick="restartQuest()" class="px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-black text-base rounded-2xl shadow-xl transition-all transform hover:-translate-y-0.5">
+                        Try Again
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation Bar -->
+        <div id="navControls" class="hidden mt-6 flex items-center justify-between">
+            <button type="button" id="prevBtn" onclick="changePage(-1)" class="px-5 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-extrabold text-sm rounded-xl border border-slate-700 transition-colors">
+                Previous
+            </button>
+            <button type="button" id="nextBtn" onclick="changePage(1)" class="px-7 py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-sm rounded-xl shadow-lg transition-transform active:scale-95">
+                Next Section
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-4 text-center text-xs text-slate-600 font-semibold border-t border-slate-900">
+        Deutsch Module 1 Interactive Assessment • Strictly Stimmt! 1 Units 1–5
+    </footer>
+
+    <script>
+        let currentPage = 0;
+        const totalPages = 6;
+        let studentName = '';
+        let audioEnabled = true;
+        let streak = 0;
+        let xp = 0;
+        let lastFocusedInput = null;
+
+        document.addEventListener('focusin', (e) => {
+            if (e.target.tagName === 'INPUT' && e.target.type === 'text') {
+                lastFocusedInput = e.target;
+            }
+        });
+
+        function insertChar(char) {
+            if (!lastFocusedInput) {
+                const activePage = document.querySelector('.page-screen.active');
+                if (activePage) {
+                    lastFocusedInput = activePage.querySelector('input[type="text"]');
+                }
+            }
+            if (lastFocusedInput) {
+                const start = lastFocusedInput.selectionStart;
+                const end = lastFocusedInput.selectionEnd;
+                const val = lastFocusedInput.value;
+                lastFocusedInput.value = val.substring(0, start) + char + val.substring(end);
+                lastFocusedInput.focus();
+                lastFocusedInput.setSelectionRange(start + char.length, start + char.length);
+            }
+        }
+
+        // Web Audio API Audio & Background Music Engine
+        let audioCtx;
+        let musicTimer = null;
+        let isMusicPlaying = false;
+        let currentTrack = 'synthwave';
+        let musicVolume = 0.2;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playMusicNote() {
+            if (!audioCtx || !isMusicPlaying || currentTrack === 'off') return;
+
+            const now = audioCtx.currentTime;
+
+            if (currentTrack === 'synthwave') {
+                const osc = audioCtx.createOscillator();
+                const filter = audioCtx.createBiquadFilter();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'sawtooth';
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(500, now);
+
+                const freqs = [110, 110, 130.81, 146.83];
+                const note = freqs[Math.floor((now * 4) % freqs.length)];
+                osc.frequency.setValueAtTime(note, now);
+
+                gain.gain.setValueAtTime(musicVolume * 0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.22);
+            } else if (currentTrack === 'chiptune') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'square';
+                const notes = [261.63, 329.63, 392.00, 523.25, 659.25];
+                const note = notes[Math.floor((now * 8) % notes.length)];
+                osc.frequency.setValueAtTime(note, now);
+
+                gain.gain.setValueAtTime(musicVolume * 0.2, now);
+                gain.gain.linearRampToValueAtTime(0.001, now + 0.08);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (currentTrack === 'quest') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'triangle';
+                const notes = [196.00, 261.63, 293.66, 329.63, 392.00];
+                const note = notes[Math.floor((now * 3) % notes.length)];
+                osc.frequency.setValueAtTime(note, now);
+
+                gain.gain.setValueAtTime(musicVolume * 0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (currentTrack === 'lofi') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'sine';
+                const notes = [174.61, 220.00, 261.63, 329.63];
+                const note = notes[Math.floor((now * 2) % notes.length)];
+                osc.frequency.setValueAtTime(note, now);
+
+                gain.gain.setValueAtTime(musicVolume * 0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.48);
+            } else if (currentTrack === 'arcade') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'sawtooth';
+                const notes = [220.00, 277.18, 329.63, 440.00, 554.37];
+                const note = notes[Math.floor((now * 10) % notes.length)];
+                osc.frequency.setValueAtTime(note, now);
+
+                gain.gain.setValueAtTime(musicVolume * 0.2, now);
+                gain.gain.linearRampToValueAtTime(0.001, now + 0.07);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.08);
+            }
+        }
+
+        function startMusicLoop() {
+            if (musicTimer) clearInterval(musicTimer);
+            isMusicPlaying = true;
+            document.getElementById('bgmPlayToggleBtn').textContent = '⏸ PAUSE';
+            document.getElementById('bgmPlayToggleBtn').className = 'bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold px-2 py-0.5 rounded-lg text-[10px] transition-colors';
+            musicTimer = setInterval(playMusicNote, 200);
+        }
+
+        function stopMusicLoop() {
+            isMusicPlaying = false;
+            if (musicTimer) clearInterval(musicTimer);
+            document.getElementById('bgmPlayToggleBtn').textContent = '▶ PLAY';
+            document.getElementById('bgmPlayToggleBtn').className = 'bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold px-2 py-0.5 rounded-lg text-[10px] transition-colors';
+        }
+
+        function toggleMusicPlay() {
+            initAudio();
+            if (isMusicPlaying) {
+                stopMusicLoop();
+            } else {
+                if (currentTrack === 'off') {
+                    currentTrack = 'synthwave';
+                    document.getElementById('bgmSelect').value = 'synthwave';
+                }
+                startMusicLoop();
+            }
+        }
+
+        function changeMusicTrack(track) {
+            initAudio();
+            currentTrack = track;
+            if (track === 'off') {
+                stopMusicLoop();
+            } else {
+                startMusicLoop();
+            }
+        }
+
+        function updateMusicVolume(val) {
+            musicVolume = parseFloat(val);
+        }
+
+        function playSound(type) {
+            if (!audioEnabled) return;
+            initAudio();
+            try {
+                const now = audioCtx.currentTime;
+
+                if (type === 'click') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.frequency.setValueAtTime(450, now);
+                    osc.frequency.exponentialRampToValueAtTime(200, now + 0.08);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'correct') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.08);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                } else if (type === 'fanfare') {
+                    [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+                        const o = audioCtx.createOscillator();
+                        const g = audioCtx.createGain();
+                        o.connect(g);
+                        g.connect(audioCtx.destination);
+                        o.frequency.setValueAtTime(freq, now + idx * 0.1);
+                        g.gain.setValueAtTime(0.15, now + idx * 0.1);
+                        g.gain.linearRampToValueAtTime(0.01, now + idx * 0.1 + 0.25);
+                        o.start(now + idx * 0.1);
+                        o.stop(now + idx * 0.1 + 0.25);
+                    });
+                }
+            } catch(e){}
+        }
+
+        function toggleAudio() {
+            audioEnabled = !audioEnabled;
+            document.getElementById('audioBtn').textContent = audioEnabled ? '🔊' : '🔇';
+        }
+
+        // Questions mapping enforcing strict case sensitivity for sentence starts and nouns
+        const QUESTIONS = {
+            q1: { label: 'Das ist ____ Gecko.', answers: ['ein'], exp: 'Gecko is masculine (der Gecko), so the sentence requires "ein".' },
+            q2: { label: 'Das ist ____ Hamster.', answers: ['ein'], exp: 'Hamster is masculine (der Hamster), so the sentence requires "ein".' },
+            q3: { label: 'Das ist ____ Hund.', answers: ['ein'], exp: 'Hund is masculine (der Hund), so the sentence requires "ein".' },
+            q4: { label: 'Das ist ____ Katze.', answers: ['eine'], exp: 'Katze is feminine (die Katze), so the sentence requires "eine".' },
+            q5: { label: 'Das ist ____ Maus.', answers: ['eine'], exp: 'Maus is feminine (die Maus), so the sentence requires "eine".' },
+            q6: { label: 'Das ist ____ Schlange.', answers: ['eine'], exp: 'Schlange is feminine (die Schlange), so the sentence requires "eine".' },
+            q7: { label: 'Das ist ____ Kaninchen.', answers: ['ein'], exp: 'Kaninchen is neuter (das Kaninchen), so the sentence requires "ein".' },
+            q8: { label: 'Das ist ____ Pferd.', answers: ['ein'], exp: 'Pferd is neuter (das Pferd), so the sentence requires "ein".' },
+
+            q9:  { label: 'er / sie / es ist -> Infinitive', answers: ['sein'], exp: '"ist" comes from the irregular infinitive "sein" (to be).' },
+            q10: { label: 'du heißt / er heißt -> Infinitive', answers: ['heißen', 'heissen'], exp: '"heißt" comes from the infinitive "heißen" (to be called).' },
+            q11: { label: 'du hast / er hat -> Infinitive', answers: ['haben'], exp: '"hast" / "hat" come from the verb "haben" (to have).' },
+            q12: { label: 'ich wohne -> Infinitive', answers: ['wohnen'], exp: '"wohne" comes from the verb "wohnen" (to live).' },
+
+            q13: { label: 'Translate "to be"', answers: ['sein'], exp: '"to be" in German is "sein".' },
+            q14: { label: 'Translate "to have"', answers: ['haben'], exp: '"to have" in German is "haben".' },
+            q15: { label: 'Translate "to be called"', answers: ['heißen', 'heissen'], exp: '"to be called" in German is "heißen".' },
+            q16: { label: 'Translate "to live"', answers: ['wohnen'], exp: '"to live" in German is "wohnen".' },
+
+            q17: { label: 'ich ___ (I am)', answers: ['bin'], exp: 'The "ich" conjugation of "sein" is "ich bin".' },
+            q18: { label: 'du ___ (you are)', answers: ['bist'], exp: 'The "du" conjugation of "sein" is "du bist".' },
+            q19: { label: 'er / sie / es ___ (he/she/it is)', answers: ['ist'], exp: 'The "er/sie/es" conjugation of "sein" is "er/sie/es ist".' },
+            q20: { label: 'ich ___ (I have)', answers: ['habe'], exp: 'The "ich" conjugation of "haben" is "ich habe".' },
+            q21: { label: 'Ich habe ____ Hund.', answers: ['einen'], exp: 'Masculine accusative direct object after "haben" takes "einen" (e.g., "einen Hund").' },
+            q22: { label: 'Hast du ____ Vogel?', answers: ['einen'], exp: 'Masculine accusative direct object after "haben" takes "einen" (e.g., "einen Vogel").' },
+            q23: { label: 'ich ___ (my name is)', answers: ['heiße', 'heisse'], exp: 'The "ich" conjugation of "heißen" is "ich heiße".' },
+            q24: { label: 'du ___ (what is your name)', answers: ['heißt', 'heisst'], exp: 'The "du" conjugation of "heißen" is "du heißt".' },
+            q25: { label: 'er / sie / es ___ (he/she is called)', answers: ['heißt', 'heisst'], exp: 'The "er/sie/es" conjugation of "heißen" is "er/sie/es heißt".' },
+
+            q26: { label: 'Translate "Where do you live?"', answers: ['Wo wohnst du', 'Wo wohnst du?'], exp: '"Where do you live?" translates to "Wo wohnst du?". Sentence starts with a capital letter.' },
+            q27: { label: 'Translate "I live in..."', answers: ['Ich wohne in', 'Ich wohne in...'], exp: '"I live in..." translates to "Ich wohne in...". Sentence starts with a capital letter.' },
+            q28: { label: 'Translate "What\'s your name?"', answers: ['Wie heißt du', 'Wie heißt du?', 'Wie heisst du', 'Wie heisst du?'], exp: '"What\'s your name?" translates to "Wie heißt du?". Sentence starts with a capital letter.' },
+            q29: { label: 'Translate "How old are you?"', answers: ['Wie alt bist du', 'Wie alt bist du?'], exp: '"How old are you?" translates to "Wie alt bist du?". Sentence starts with a capital letter.' },
+            q30: { label: 'Translate "Do you have siblings?"', answers: ['Hast du Geschwister', 'Hast du Geschwister?'], exp: '"Do you have siblings?" translates to "Hast du Geschwister?". Sentences must start with a capital letter and nouns like "Geschwister" must be capitalized.' }
+        };
+
+        function startQuest() {
+            initAudio();
+            const nameInput = document.getElementById('studentName');
+            const nameError = document.getElementById('nameError');
+            const welcomeBanner = document.getElementById('welcomeBanner');
+            const displayWelcomeName = document.getElementById('displayWelcomeName');
+
+            studentName = nameInput.value.trim();
+
+            if (!studentName) {
+                nameError.classList.remove('hidden');
+                nameInput.focus();
+                return;
+            }
+
+            nameError.classList.add('hidden');
+            displayWelcomeName.textContent = studentName;
+            welcomeBanner.classList.remove('hidden');
+            playSound('correct');
+
+            if (!isMusicPlaying && currentTrack !== 'off') {
+                startMusicLoop();
+            }
+
+            setTimeout(() => {
+                changePage(1);
+            }, 700);
+        }
+
+        function updateTracker() {
+            const progressBar = document.getElementById('progressBar');
+            const subHeaderProgress = document.getElementById('subHeaderProgress');
+            
+            const pct = (currentPage / totalPages) * 100;
+            progressBar.style.width = `${pct}%`;
+
+            if (currentPage === 0) {
+                subHeaderProgress.textContent = 'Step 1 of 7 • Get Ready!';
+            } else if (currentPage === 6) {
+                subHeaderProgress.textContent = 'Final Step • Results!';
+            } else {
+                subHeaderProgress.textContent = `Section ${currentPage} of 5 • Keep going!`;
+            }
+
+            document.getElementById('streakCount').textContent = streak;
+            document.getElementById('xpCount').textContent = xp;
+        }
+
+        function changePage(delta) {
+            playSound('click');
+
+            const currentEl = document.getElementById(`page${currentPage}`);
+            currentEl.classList.remove('active');
+
+            currentPage += delta;
+            if (currentPage < 0) currentPage = 0;
+            if (currentPage > totalPages) currentPage = totalPages;
+
+            const nextEl = document.getElementById(`page${currentPage}`);
+            nextEl.classList.add('active');
+
+            const navControls = document.getElementById('navControls');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+
+            if (currentPage === 0) {
+                navControls.classList.add('hidden');
+            } else {
+                navControls.classList.remove('hidden');
+            }
+
+            if (currentPage === 1) {
+                prevBtn.classList.add('hidden');
+            } else {
+                prevBtn.classList.remove('hidden');
+            }
+
+            if (currentPage === 5) {
+                nextBtn.textContent = 'Submit Quest';
+                nextBtn.className = 'px-7 py-3 bg-gradient-to-r from-emerald-400 to-emerald-500 hover:from-emerald-300 hover:to-emerald-400 text-slate-950 font-black text-sm rounded-xl shadow-lg transition-transform active:scale-95';
+            } else if (currentPage === 6) {
+                navControls.classList.add('hidden');
+                calculateAndRenderResults();
+            } else {
+                nextBtn.textContent = 'Next Section';
+                nextBtn.className = 'px-7 py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-sm rounded-xl shadow-lg transition-transform active:scale-95';
+            }
+
+            if (delta > 0 && currentPage > 1 && currentPage <= 5) {
+                streak += 1;
+                xp += 25;
+            }
+
+            updateTracker();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Strict case-sensitive normalization preserving sentence start capitalization and noun capitalization
+        function normalize(str) {
+            if (!str) return '';
+            return str
+                .trim()
+                .replace(/ß/g, 'ss')
+                .replace(/[.,?!]/g, '')
+                .replace(/\s+/g, ' ');
+        }
+
+        function calculateAndRenderResults() {
+            let correctCount = 0;
+            const total = Object.keys(QUESTIONS).length;
+            const resultsList = document.getElementById('resultsList');
+            resultsList.innerHTML = '';
+
+            Object.keys(QUESTIONS).forEach((id, index) => {
+                const q = QUESTIONS[id];
+                const inputEl = document.getElementById(id);
+                const rawVal = inputEl ? inputEl.value : '';
+                const userVal = normalize(rawVal);
+                const isCorrect = q.answers.map(normalize).includes(userVal);
+
+                if (isCorrect) correctCount++;
+
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-2xl border ${isCorrect ? 'bg-emerald-950/30 border-emerald-500/40' : 'bg-rose-950/30 border-rose-500/40'}`;
+
+                card.innerHTML = `
+                    <div class="flex items-start justify-between gap-3 mb-2">
+                        <span class="text-xs font-bold text-slate-400">Item ${index + 1}: ${q.label}</span>
+                        <span class="px-2.5 py-0.5 text-[10px] font-black uppercase rounded-full ${isCorrect ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'}">
+                            ${isCorrect ? 'Correct +10XP' : 'Missed'}
+                        </span>
+                    </div>
+                    <div class="text-sm font-bold mb-1">
+                        <span class="text-slate-500 text-xs uppercase">Your input:</span>
+                        <span class="${isCorrect ? 'text-emerald-400' : 'text-rose-400'} ml-1">${rawVal.trim() || '(Blank)'}</span>
+                    </div>
+                    ${!isCorrect ? `
+                        <div class="text-sm font-bold mb-2">
+                            <span class="text-slate-500 text-xs uppercase">Correct answer:</span>
+                            <span class="text-amber-300 ml-1">${q.answers[0]}</span>
+                        </div>
+                        <div class="text-xs bg-slate-950 p-3 rounded-xl border border-rose-500/20 text-slate-300 mt-2">
+                            <strong class="text-rose-400">Grammar note:</strong> ${q.exp}
+                        </div>
+                    ` : ''}
+                `;
+
+                resultsList.appendChild(card);
+            });
+
+            const scorePercent = Math.round((correctCount / total) * 100);
+            xp += correctCount * 10;
+
+            document.getElementById('congratsHeader').textContent = `Well done, ${studentName}!`;
+            document.getElementById('finalScorePercent').textContent = `${scorePercent}%`;
+            document.getElementById('finalScoreMarks').textContent = `${correctCount} / ${total} Marks`;
+
+            let rank = 'MODULE 1 MASTER';
+            if (scorePercent < 50) { rank = 'NOVICE'; }
+            else if (scorePercent < 70) { rank = 'LEARNER'; }
+            else if (scorePercent < 85) { rank = 'ADVANCED'; }
+            else if (scorePercent < 98) { rank = 'EXPERT'; }
+
+            document.getElementById('rankBadge').textContent = `🏆 ${rank}`;
+
+            updateTracker();
+            playSound('fanfare');
+
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 120,
+                    spread: 80,
+                    origin: { y: 0.6 }
+                });
+            }
+        }
+
+        function restartQuest() {
+            location.reload();
+        }
+    </script>
+</body>
+</html>
